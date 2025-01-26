@@ -87,17 +87,27 @@ if selected_page == "Questões Análise":
         def __init__(self, OneHotEncoding, handle_unknown='ignore'):
             self.OneHotEncoding = OneHotEncoding
             self.handle_unknown = handle_unknown
-            self.ohe = OneHotEncoder(handle_unknown=self.handle_unknown)
-
+            self.ohe = OneHotEncoder(sparse=False, handle_unknown=self.handle_unknown)  # sparse=False para retornar uma matriz densa
+    
         def fit(self, X, y=None):
-            # Ajusta o codificador apenas nas colunas selecionadas
+            # Ajusta o OneHotEncoder nas colunas selecionadas
             self.ohe.fit(X[self.OneHotEncoding])
             return self
-
+    
         def transform(self, X):
             # Transforma as colunas selecionadas
             X_copy = X.copy()
-            X_copy[self.OneHotEncoding] = self.ohe.transform(X_copy[self.OneHotEncoding])
+            
+            # Realiza a transformação
+            transformed = self.ohe.transform(X_copy[self.OneHotEncoding])
+            
+            # Converte para um DataFrame e adiciona ao DataFrame original
+            transformed_df = pd.DataFrame(transformed, columns=self.ohe.get_feature_names_out(self.OneHotEncoding))
+            
+            # Remove as colunas originais e adiciona as transformadas
+            X_copy = X_copy.drop(self.OneHotEncoding, axis=1)
+            X_copy = pd.concat([X_copy, transformed_df], axis=1)
+            
             return X_copy
 
     class CustomOrdinalEncoder:
@@ -106,22 +116,22 @@ if selected_page == "Questões Análise":
             self.handle_unknown = handle_unknown
             self.unknown_value = unknown_value
             self.oenc = OrdinalEncoder(handle_unknown=self.handle_unknown, unknown_value=self.unknown_value)
-    
+
         def fit(self, X, y=None):
             # Ajusta o codificador nas colunas selecionadas
             self.oenc.fit(X[self.ordinal_feature])
             return self
-    
+
         def transform(self, X):
             # Transforma as colunas selecionadas
             X_copy = X.copy()
-            
+
             # Verifica se a coluna a ser transformada existe em X
             if self.ordinal_feature in X_copy.columns:
                 X_copy[self.ordinal_feature] = self.oenc.transform(X_copy[[self.ordinal_feature]])
             else:
                 raise ValueError(f"A coluna '{self.ordinal_feature}' não existe no DataFrame fornecido.")
-            
+
             return X_copy
 
 
