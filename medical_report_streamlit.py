@@ -600,13 +600,14 @@ if selected_page == "Etapas do Desenvolvimento":
             else:
                 print(f"Uma ou mais features não estão no DataFrame.")
                 return df
-    def pipeline(df):
+    def criar_pipeline(df):
         pipeline = Pipeline([
-        ('drop_features', DropFeatures(feature_to_drop=['id'])),
-        ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
-        ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'])),
-        ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose']))
-        ])
+            ('drop_features', DropFeatures(feature_to_drop=['id'])),
+            ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
+            ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'])),
+            ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose']))
+    ])
+
         return pipeline.fit_transform(df)
 
 
@@ -663,6 +664,7 @@ if selected_page == "Etapas do Desenvolvimento":
     # Salvando modelo com melhor performace:
     joblib.dump(modelo_xgb, 'xgb.vascular')
     ''')
+    
     def roda_modelo(modelo, X_treino, y_treino, X_teste, y_teste):
         # Treinamento do modelo
         modelo.fit(X_treino, y_treino)
@@ -712,7 +714,7 @@ if selected_page == "Etapas do Desenvolvimento":
         # Limpar a figura para evitar sobreposição em gráficos futuros
         plt.clf()
     # Preparação dos dados
-    df_transformado = pipeline.fit_transform(df_treino)
+    df_transformado = criar_pipeline(df_treino)
     X = df_transformado.drop(columns=['DoencaVascular'])  # Variáveis independentes
     y = df_transformado['DoencaVascular']  # Variável dependente
 
@@ -726,7 +728,7 @@ if selected_page == "Etapas do Desenvolvimento":
     modelo_xgb = GradientBoostingClassifier(random_state=SEED)
     roda_modelo(modelo_xgb, X_treino, y_treino, X_teste, y_teste)
     # Salvando o modelo com melhor desempenho
-    joblib.dump(modelo_xgb, 'modelo/xgb.vascular_1')
+    joblib.dump(modelo_xgb, 'xgb.vascular')
     st.markdown('''
         ### 5. Implementação da Aplicação:
         * **Desenvolver uma interface intuitiva no Streamlit para entrada de dados e exibição dos resultados.**
