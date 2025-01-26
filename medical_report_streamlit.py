@@ -83,29 +83,22 @@ if selected_page == "Questões Análise":
                 print('Uma ou mais features não estão no DataFrame.')
                 return df
 
-
-    class CustomOneHotEncoder(BaseEstimator, TransformerMixin):
-        def __init__(self, OneHotEncoding=['Fumante', 'UsaAlcool', 'AtivoFisicamente']):
+    class CustomOneHotEncoder:
+        def __init__(self, OneHotEncoding, handle_unknown='ignore'):
             self.OneHotEncoding = OneHotEncoding
-            self.one_hot_enc = OneHotEncoder(sparse_output=False)  # Retorna um array denso
+            self.handle_unknown = handle_unknown
+            self.ohe = OneHotEncoder(handle_unknown=self.handle_unknown)
 
-        def fit(self, df, y=None):
-            if set(self.OneHotEncoding).issubset(df.columns):
-                self.one_hot_enc.fit(df[self.OneHotEncoding])
+        def fit(self, X, y=None):
+            # Ajusta o codificador apenas nas colunas selecionadas
+            self.ohe.fit(X[self.OneHotEncoding])
             return self
 
-        def transform(self, df):
-            if set(self.OneHotEncoding).issubset(df.columns):
-                encoded_array = self.one_hot_enc.transform(df[self.OneHotEncoding])
-                encoded_df = pd.DataFrame(encoded_array, 
-                                          columns=self.one_hot_enc.get_feature_names_out(self.OneHotEncoding), 
-                                          index=df.index)
-                df_copy = df.drop(columns=self.OneHotEncoding)
-                return pd.concat([df_copy, encoded_df], axis=1)
-            else:
-                print('Uma ou mais features não estão no DataFrame.')
-                return df
-
+        def transform(self, X):
+            # Transforma as colunas selecionadas
+            X_copy = X.copy()
+            X_copy[self.OneHotEncoding] = self.ohe.transform(X_copy[self.OneHotEncoding])
+            return X_copy
 
     class CustomOrdinalEncoder(BaseEstimator, TransformerMixin):
         def __init__(self, ordinal_feature=['Colesterol', 'Glicose']):
@@ -209,11 +202,11 @@ if selected_page == "Questões Análise":
 
     def criar_pipeline(df):
         pipeline = Pipeline([
-            ('drop_features', DropFeatures(feature_to_drop=['id'])),
-            ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
-            ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'], handle_unknown='ignore')),
-            ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose'], handle_unknown='use_encoded_value', unknown_value=-1))
-        ])
+    ('drop_features', DropFeatures(feature_to_drop=['id'])),
+    ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
+    ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'], handle_unknown='ignore')),
+    ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose'], handle_unknown='use_encoded_value', unknown_value=-1))
+])
         return pipeline.fit(df)
 
     # Ajuste: fit no df_treino, transform no df_teste e novo cliente
