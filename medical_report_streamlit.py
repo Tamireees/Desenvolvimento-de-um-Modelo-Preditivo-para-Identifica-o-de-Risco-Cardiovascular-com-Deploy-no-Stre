@@ -39,7 +39,8 @@ if selected_page == "Questões Análise":
     st.title("Questões Análise")
     
     #carregando os dados
-    dados_clean = pd.read_csv("https://raw.githubusercontent.com/Tamireees/modelo_preditivo/refs/heads/main/dados_clean", sep=',')
+    dados_clean = pd.read_csv("https://raw.githubusercontent.com/Tamireees/Desenvolvimento-de-um-Modelo-Preditivo-para-Identifica-o-de-Risco-Cardiovascular-com-Deploy-no-Stre/refs/heads/main/dados_clean", sep=',')
+
     
     
     
@@ -198,7 +199,6 @@ if selected_page == "Apresentação":
         
         
         
-        s
         
 if selected_page == "Etapas do Desenvolvimento":
     st.title("Etapas do Desenvolvimento")
@@ -526,93 +526,90 @@ if selected_page == "Etapas do Desenvolvimento":
     class DropFeatures(BaseEstimator, TransformerMixin):
         def __init__(self, feature_to_drop=['id']): 
             self.feature_to_drop = feature_to_drop
-        def fit(self,df):
+
+        def fit(self, df, y=None):
             return self
-        def transform(self,df):
-            if (set(self.feature_to_drop).issubset(df.columns)):
-                df.drop(self.feature_to_drop,axis=1,inplace=True)
-                return df
-            else:
-                print('Uma ou mais features não estão no DataFrame')
-            return df
-    class MinMAx(BaseEstimator, TransformerMixin):
+
+        def transform(self, df):
+            missing_features = set(self.feature_to_drop) - set(df.columns)
+            if missing_features:
+                print(f"Uma ou mais features não estão no DataFrame: {', '.join(missing_features)}")
+            return df.drop(columns=self.feature_to_drop, errors='ignore')
+
+
+    class CustomMinMaxScaler(BaseEstimator, TransformerMixin):
         def __init__(self, min_max_scaler=['Idade', 'Genero', 'Altura', 'Peso', 'PressaoArterialSistolica',
-            'PressaoArterialDiastolica']):
+                                           'PressaoArterialDiastolica']):
             self.min_max_scaler = min_max_scaler
             self.min_max_enc = MinMaxScaler()
-        def fit(self, df):
+
+        def fit(self, df, y=None):
             if set(self.min_max_scaler).issubset(df.columns):
                 self.min_max_enc.fit(df[self.min_max_scaler])
             return self
+
         def transform(self, df):
             if set(self.min_max_scaler).issubset(df.columns):
-                scaled_values = self.min_max_enc.transform(df[self.min_max_scaler])
-                df[self.min_max_scaler] = scaled_values
-                return df
+                df_copy = df.copy()
+                scaled_values = self.min_max_enc.transform(df_copy[self.min_max_scaler])
+                df_copy[self.min_max_scaler] = scaled_values
+                return df_copy
             else:
                 print('Uma ou mais features não estão no DataFrame.')
                 return df
-    class OneHotEncodingNames(BaseEstimator, TransformerMixin):
+
+
+    class CustomOneHotEncoder(BaseEstimator, TransformerMixin):
         def __init__(self, OneHotEncoding=['Fumante', 'UsaAlcool', 'AtivoFisicamente']):
             self.OneHotEncoding = OneHotEncoding
-            self.one_hot_enc = OneHotEncoder(sparse_output=False)  # Retorna um array denso para facilitar
-        def fit(self, df):
+            self.one_hot_enc = OneHotEncoder(sparse_output=False)  # Retorna um array denso
+
+        def fit(self, df, y=None):
             if set(self.OneHotEncoding).issubset(df.columns):
                 self.one_hot_enc.fit(df[self.OneHotEncoding])
             return self
+
         def transform(self, df):
             if set(self.OneHotEncoding).issubset(df.columns):
-                # Obter as colunas codificadas
                 encoded_array = self.one_hot_enc.transform(df[self.OneHotEncoding])
                 encoded_df = pd.DataFrame(encoded_array, 
                                           columns=self.one_hot_enc.get_feature_names_out(self.OneHotEncoding), 
                                           index=df.index)
-            # Concatenar as colunas codificadas com o restante do DataFrame
-                outras_features = df.drop(columns=self.OneHotEncoding)
-                df_full = pd.concat([outras_features, encoded_df], axis=1)
-                return df_full
+                df_copy = df.drop(columns=self.OneHotEncoding)
+                return pd.concat([df_copy, encoded_df], axis=1)
             else:
                 print('Uma ou mais features não estão no DataFrame.')
                 return df
-    class OrdinalFeature(BaseEstimator, TransformerMixin):
+
+
+    class CustomOrdinalEncoder(BaseEstimator, TransformerMixin):
         def __init__(self, ordinal_feature=['Colesterol', 'Glicose']):
-                self.ordinal_feature = ordinal_feature
-        def fit(self, df):
+            self.ordinal_feature = ordinal_feature
+            self.ordinal_enc = OrdinalEncoder()
+
+        def fit(self, df, y=None):
+            if set(self.ordinal_feature).issubset(df.columns):
+                self.ordinal_enc.fit(df[self.ordinal_feature])
             return self
+
         def transform(self, df):
-            missing_columns = [col for col in self.ordinal_feature if col not in df.columns]
-            if missing_columns:
-                print(f"As colunas seguintes não estão no DataFrame: {', '.join(missing_columns)}")
+            if set(self.ordinal_feature).issubset(df.columns):
+                df_copy = df.copy()
+                df_copy[self.ordinal_feature] = self.ordinal_enc.transform(df_copy[self.ordinal_feature])
+                return df_copy
             else:
-                ordinal_encoder = OrdinalEncoder()
-                df[self.ordinal_feature] = ordinal_encoder.fit_transform(df[self.ordinal_feature])
-            return df
-    class Oversample(BaseEstimator, TransformerMixin):
-        def __init__(self, target_column='DoencaVascular'):
-            self.target_column = target_column
-            self.oversample = SMOTE(sampling_strategy='minority')
-        def fit(self, df):
-        # Não é necessário treinar ou ajustar nada, apenas retorna self
-            return self
-        def transform(self, df):
-            if self.target_column in df.columns:
-                X = df.drop(columns=[self.target_column])
-                y = df[self.target_column]
-                X_bal, y_bal = self.oversample.fit_resample(X, y)
-                return pd.concat([pd.DataFrame(X_bal, columns=X.columns),
-                                  pd.DataFrame(y_bal, columns=[self.target_column])], axis=1)
-            else:
-                print(f"A coluna target '{self.target_column}' não está no DataFrame.")
+                print(f"Uma ou mais features não estão no DataFrame.")
                 return df
     def pipeline(df):
         pipeline = Pipeline([
-            ('feature_dropper', DropFeatures()),
-            ('min_max_scaler', MinMAx()),
-            ('OneHotEncoding', OneHotEncodingNames()),
-            ('ordinal_feature', OrdinalFeature()),
-            ('oversample', Oversample())
-    ])
+        ('drop_features', DropFeatures(feature_to_drop=['id'])),
+        ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
+        ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'])),
+        ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose']))
+        ])
         return pipeline.fit_transform(df)
+
+
     st.markdown('''
                 ### 4. Seleção e Treinamento do Modelo:
     * **Testar diferentes algoritmos de machine learning, como Regressão Logística, Random Forest, e XGBoost.**
@@ -715,10 +712,12 @@ if selected_page == "Etapas do Desenvolvimento":
         # Limpar a figura para evitar sobreposição em gráficos futuros
         plt.clf()
     # Preparação dos dados
-    X_teste = df_teste.drop('DoencaVascular', axis=1)
-    y_teste = df_teste['DoencaVascular']
-    X_treino = df_treino.drop('DoencaVascular', axis=1)
-    y_treino = df_treino['DoencaVascular']
+    df_transformado = pipeline.fit_transform(df_treino)
+    X = df_transformado.drop(columns=['DoencaVascular'])  # Variáveis independentes
+    y = df_transformado['DoencaVascular']  # Variável dependente
+
+    X_treino, X_teste, y_treino, y_teste = train_test_split(X, y, test_size=0.2, random_state=SEED)
+    
     # Treinando e avaliando os modelos
     modelo_logistico = LogisticRegression(random_state=SEED)
     roda_modelo(modelo_logistico, X_treino, y_treino, X_teste, y_teste)
@@ -727,7 +726,7 @@ if selected_page == "Etapas do Desenvolvimento":
     modelo_xgb = GradientBoostingClassifier(random_state=SEED)
     roda_modelo(modelo_xgb, X_treino, y_treino, X_teste, y_teste)
     # Salvando o modelo com melhor desempenho
-    joblib.dump(modelo_xgb, 'xgb.vascular')
+    joblib.dump(modelo_xgb, 'modelo/xgb.vascular_1')
     st.markdown('''
         ### 5. Implementação da Aplicação:
         * **Desenvolver uma interface intuitiva no Streamlit para entrada de dados e exibição dos resultados.**
