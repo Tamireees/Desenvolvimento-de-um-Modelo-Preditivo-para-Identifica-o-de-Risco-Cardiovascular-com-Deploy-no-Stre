@@ -100,24 +100,23 @@ if selected_page == "Questões Análise":
             X_copy[self.OneHotEncoding] = self.ohe.transform(X_copy[self.OneHotEncoding])
             return X_copy
 
-    class CustomOrdinalEncoder(BaseEstimator, TransformerMixin):
-        def __init__(self, ordinal_feature=['Colesterol', 'Glicose']):
+    class CustomOrdinalEncoder:
+        def __init__(self, ordinal_feature, handle_unknown='use_encoded_value', unknown_value=-1):
             self.ordinal_feature = ordinal_feature
-            self.ordinal_enc = OrdinalEncoder()
+            self.handle_unknown = handle_unknown
+            self.unknown_value = unknown_value
+            self.oenc = OrdinalEncoder(handle_unknown=self.handle_unknown, unknown_value=self.unknown_value)
 
-        def fit(self, df, y=None):
-            if set(self.ordinal_feature).issubset(df.columns):
-                self.ordinal_enc.fit(df[self.ordinal_feature])
+        def fit(self, X, y=None):
+            # Ajusta o codificador nas colunas selecionadas
+            self.oenc.fit(X[self.ordinal_feature])
             return self
 
-        def transform(self, df):
-            if set(self.ordinal_feature).issubset(df.columns):
-                df_copy = df.copy()
-                df_copy[self.ordinal_feature] = self.ordinal_enc.transform(df_copy[self.ordinal_feature])
-                return df_copy
-            else:
-                print(f"Uma ou mais features não estão no DataFrame.")
-                return df
+        def transform(self, X):
+            # Transforma as colunas selecionadas
+            X_copy = X.copy()
+            X_copy[self.ordinal_feature] = self.oenc.transform(X_copy[self.ordinal_feature])
+            return X_copy
 
 
 
