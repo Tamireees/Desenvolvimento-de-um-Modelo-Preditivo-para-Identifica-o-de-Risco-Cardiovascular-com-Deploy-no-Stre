@@ -85,26 +85,26 @@ if selected_page == "Questões Análise":
 
     class CustomOneHotEncoder:
         def __init__(self, OneHotEncoding, handle_unknown='ignore'):
-            self.OneHotEncoding = OneHotEncoding
+            self.OneHotEncoding = OneHotEncoding  # Espera uma lista de colunas
             self.handle_unknown = handle_unknown
-            self.ohe = OneHotEncoder(sparse_output=False, handle_unknown=self.handle_unknown)  # sparse=False para retornar uma matriz densa
+            self.ohe = OneHotEncoder(sparse_output=False, handle_unknown=self.handle_unknown)  # Certifique-se de usar sparse_output=False
 
         def fit(self, X, y=None):
-            # Ajusta o OneHotEncoder nas colunas selecionadas
+            # Aqui, estamos certificando que OneHotEncoding é uma lista de colunas
             self.ohe.fit(X[self.OneHotEncoding])
             return self
 
         def transform(self, X):
-            # Transforma as colunas selecionadas
+            # Fazemos uma cópia do DataFrame
             X_copy = X.copy()
 
-            # Realiza a transformação
+            # Transformamos as colunas selecionadas
             transformed = self.ohe.transform(X_copy[self.OneHotEncoding])
 
-            # Converte para um DataFrame e adiciona ao DataFrame original
+            # Convertemos para DataFrame e adicionamos ao DataFrame original
             transformed_df = pd.DataFrame(transformed, columns=self.ohe.get_feature_names_out(self.OneHotEncoding))
 
-            # Remove as colunas originais e adiciona as transformadas
+            # Removemos as colunas originais e adicionamos as transformadas
             X_copy = X_copy.drop(self.OneHotEncoding, axis=1)
             X_copy = pd.concat([X_copy, transformed_df], axis=1)
 
