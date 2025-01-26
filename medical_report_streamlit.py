@@ -211,8 +211,8 @@ if selected_page == "Questões Análise":
         pipeline = Pipeline([
             ('drop_features', DropFeatures(feature_to_drop=['id'])),
             ('minmax_scaler', CustomMinMaxScaler(min_max_scaler=['Idade', 'Altura', 'Peso'])),
-            ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'])),
-            ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose']))
+            ('onehot_encoder', CustomOneHotEncoder(OneHotEncoding=['Fumante', 'UsaAlcool'], handle_unknown='ignore')),
+            ('ordinal_encoder', CustomOrdinalEncoder(ordinal_feature=['Colesterol', 'Glicose'], handle_unknown='use_encoded_value', unknown_value=-1))
         ])
         return pipeline.fit(df)
 
