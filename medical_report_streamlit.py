@@ -22,7 +22,7 @@ from sklearn.pipeline import Pipeline
 
 # Configuração inicial do Streamlit
 st.set_page_config(page_title="Análise de Doença Vascular", layout="wide")
-dados_clean = pd.read_csv("https://raw.githubusercontent.com/Tamireees/modelo_preditivo/refs/heads/main/dados_clean", sep=',')
+dados_clean = pd.read_csv("https://raw.githubusercontent.com/Tamireees/Desenvolvimento-de-um-Modelo-Preditivo-para-Identifica-o-de-Risco-Cardiovascular-com-Deploy-no-Stre/refs/heads/main/dados_clean", sep=',')
 
 # Definir as páginas
 pages = {

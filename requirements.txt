@@ -1,10 +1,11 @@
-numpy==1.25.2      # Última versão estável
-pandas==2.1.2      # Última versão estável
-scikit-learn==1.3.0  # Versão mais recente compatível
-imbalanced-learn==0.11.0  # Versão mais recente
-streamlit==1.22.0    # Última versão estável compatível
-joblib==1.3.1        # Última versão estável
-streamlit-lottie==0.0.4  # Última versão disponível
-matplotlib==3.7.1    # Versão mais recente estável
-seaborn==0.12.2      # Última versão estável
-
+numpy==1.26.0
+pandas==1.3.5
+scikit-learn==1.0.2
+imbalanced-learn==0.9.0
+streamlit>=1.12.0
+boto3==1.20.34
+joblib>=0.11,<=1.0.1
+streamlit-lottie==0.0.3
+nbconvert==6.4.3
+seaborn==0.11.2
+matplotlib==3.4.3
