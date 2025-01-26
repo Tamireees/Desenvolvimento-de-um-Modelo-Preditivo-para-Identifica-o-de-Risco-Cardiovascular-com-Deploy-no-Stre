@@ -106,16 +106,22 @@ if selected_page == "Questões Análise":
             self.handle_unknown = handle_unknown
             self.unknown_value = unknown_value
             self.oenc = OrdinalEncoder(handle_unknown=self.handle_unknown, unknown_value=self.unknown_value)
-
+    
         def fit(self, X, y=None):
             # Ajusta o codificador nas colunas selecionadas
             self.oenc.fit(X[self.ordinal_feature])
             return self
-
+    
         def transform(self, X):
             # Transforma as colunas selecionadas
             X_copy = X.copy()
-            X_copy[self.ordinal_feature] = self.oenc.transform(X_copy[self.ordinal_feature])
+            
+            # Verifica se a coluna a ser transformada existe em X
+            if self.ordinal_feature in X_copy.columns:
+                X_copy[self.ordinal_feature] = self.oenc.transform(X_copy[[self.ordinal_feature]])
+            else:
+                raise ValueError(f"A coluna '{self.ordinal_feature}' não existe no DataFrame fornecido.")
+            
             return X_copy
 
 
